@@ -1,0 +1,27 @@
+#!/bin/bash
+#Usage:  cd /usr/local/bin && wget -O addsftp https://raw.githubusercontent.com/botkee/sftp/master/dbcreator.sh && chmod +x addsftp && ./createdb
+
+
+#set your ssh port
+PORT=1008
+
+IP="$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)"
+
+newuser=$1
+#newuserpassword=$(pwgen 18 1)
+
+newuserpassword=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 15 ;);
+
+sudo useradd -m -d /var/www/sftp/$newuser -G sftp_users $newuser
+#sudo echo -e "$newuser:jacobd77rhYd8fhr63dhzaw" | chpasswd
+echo -e "$newuserpassword\n$newuserpassword" | passwd $newuser
+mkdir -p /var/www/sftp/$newuser
+sudo chown root /var/www/sftp/$newuser
+mkdir -p /var/www/sftp/$newuser/upload
+sudo chown $newuser /var/www/sftp/$newuser/upload
+
+echo -e "
+sftp $newuser@$IP : $newuserpassword - port: $PORT
+" >> /root/sftp_users
+cat /root/sftp_users
+sftp -P$PORT $newuser@$IP
